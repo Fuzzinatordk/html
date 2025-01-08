@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>Todo App</title>
+  </head>
+  <body>
+    <ul id="todo-list">
+      <li>Initial todos <input type="checkbox"></li>
+      <li>Will be updated by server todos <input type="checkbox"></li>
+    </ul>
+    <div id="deleteResult"></div>
+    <input type="text" id="text"/>
+    <button id="button">Create todo</button>
+    <button id="deleteButton">Delete todo</button>
+    
+    <script>
+      const todos = document.getElementById("todo-list");
+      const button = document.getElementById("button");
+      const deleteButton = document.getElementById("deleteButton"); 
+      const text_inp = document.getElementById("text");
+
+      button.addEventListener("click", on_click);
+      deleteButton.addEventListener("click", on_click); 
+
+      async function on_click(event) {
+        if (text_inp.value === "") {
+          return;
+        }
+
+        if (event.target.id === "button") {
+          // post the todo
+          await fetch("todos", {
+            method: "POST", 
+            body: JSON.stringify({
+              name: text_inp.value,
+              done: false,
+            }),
+            headers: {'Content-Type': 'application/json'}
+          });
+        } else if (event.target.id === "deleteButton") {
+          // delete the todo
+          const res = await fetch("todos", {
+                        method: "DELETE",
+                        body: JSON.stringify({ name: text_inp.value }),
+                        headers: { 'Content-Type': 'application/json' }
+                      });
+          const deleteResult = await res.json();
+          const messageDel = document.getElementById("deleteResult"); // Corrected ID
+
+          if (deleteResult) {
+            messageDel.textContent = "Entry successfully removed";
+          } else {
+            messageDel.textContent = "Entry not removed";
+          }
+        }
+
+        // then update view
+        const res = await fetch("todos", {method: "GET"});
+        const todos_data = await res.json();
+        console.log(todos_data);
+        
+        todos.innerHTML = ""; // clear todo elements
+        for (const todo of todos_data) {
+          const li = document.createElement("li");
+          li.innerHTML = `${todo["name"]} <input type="checkbox" ${todo["done"] ? "checked" : ""}>`;
+          todos.appendChild(li);
+        }
+      }
+    </script>
+  </body>
+</html>
